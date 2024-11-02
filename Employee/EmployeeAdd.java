@@ -48,7 +48,7 @@ public class EmployeeAdd {
         String query = "INSERT INTO EMPLOYEE (Fname, minit, Lname, Ssn, Bdate, Address, Sex, Salary, super_ssn, Dno) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DatabaseConnection.connection;
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             pstmt.setString(1, fname);

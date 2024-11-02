@@ -1,22 +1,34 @@
+import Database.DatabaseConnection;
 import Employee.EmployeeController;
 
 import java.util.Scanner;
+import java.util.Objects;
 
 public class Main {
     private static final EmployeeController employeeController = new EmployeeController();
     public static void main(String[] args) {
         boolean exit_flag = false;
-        System.out.println("[도우미] : 안녕하세요, Company Database 관리 시스템입니다.");
+        boolean database_flag = false;
+
+        System.out.println("[도우미] : 안녕하세요, 직원 관리 시스템입니다.");
+        while(!database_flag){
+            System.out.println("[도우미] : 데이터베이스 연결을 시도합니다.");
+
+            DatabaseConnection.getConnection();
+
+            if(Objects.isNull(DatabaseConnection.connection)){
+                continue;
+            }
+            database_flag = true;
+        }
+
         while(!exit_flag) {
             Scanner scanner = new Scanner(System.in);
 
-            System.out.println("[도우미] : 관리가 필요한 테이블 번호를 입력해주세요.");
-            System.out.println("1. DEPARTMENT");
-            System.out.println("2. DEPENDENT");
-            System.out.println("3. DEPT_LOCATIONS");
-            System.out.println("4. EMPLOYEE");
-            System.out.println("5. PROJECT");
-            System.out.println("6. WORKS_ON");
+            // 예시
+            System.out.println("[도우미] : 관리 카테고리를 입력해주세요.");
+            System.out.println("1. 직원 조회");
+            System.out.println("2. 직원 관리");
 
             System.out.println();
 
@@ -25,18 +37,13 @@ public class Main {
             System.out.println();
             switch (menu_number) {
                 case "1":
+                    employeeController.getController();
                     break;
                 case "2":
-                    break;
-                case "3":
-                    break;
-                case "4":
-                    employeeController.init();
-                    break;
-                case "5":
+                    employeeController.manageController();
                     break;
                 default:
-                    System.out.println("[도우미] 잘못된 입력입니다. 1~6사이의 숫자만 입력해주세요.");
+                    System.out.println("[도우미] 잘못된 입력입니다. 1, 2의 숫자만 입력해주세요.");
                     continue;
             }
 
