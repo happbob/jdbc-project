@@ -1,18 +1,27 @@
 package Database;
 
 import java.sql.*;
+import java.util.Scanner;
 
 public class DatabaseConnection {
-    public static Connection getConnection() {
-        Connection connection = null;
-        try {
-            String url = "jdbc:mysql://localhost:3306/COMPANY"; // 데이터베이스 이름
-            String user = "root"; // 사용자 이름
-            String password = "pass1234"; // 비밀번호
+    static String database, user, password;
+    static String baseUrl = "jdbc:mysql://localhost:3306/";
+    public static Connection connection = null;
 
-            connection = DriverManager.getConnection(url, user, password);
+    public static Connection getConnection() {
+        Scanner scanner = new Scanner(System.in);
+        try {
+            System.out.println("[도우미] : database 이름을 입력해주세요.");
+            database = scanner.nextLine();
+            System.out.println("[도우미] : 데이터베이스 유저명을 입력해주세요.");
+            user = scanner.nextLine();
+            System.out.println("[도우미] : 데이터베이스 비밀번호을 입력해주세요.");
+            password = scanner.nextLine();
+
+            connection = DriverManager.getConnection(baseUrl + database, user, password);
         } catch (SQLException e) {
             System.out.println("Connection failed: " + e.getMessage());
+            return null;
         }
         return connection;
     }
