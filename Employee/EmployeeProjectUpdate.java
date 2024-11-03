@@ -21,9 +21,9 @@ public class EmployeeProjectUpdate {
             try {
                 PreparedStatement project_list = conn.prepareStatement(project_employee);
                 rs = project_list.executeQuery();
-                System.out.printf("%-10s %-20s %-20s %-20s %-6s %-20s %-5s %n",
+                System.out.printf("%-10s | %-20s | %-20s | %-20s | %-6s | %-20s | %-5s %n",
                         "Pno", "Pname", "Essn", "Fname", "Minit", "Lname", "Hours");
-                System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+                System.out.println("---------------------------------------------------------------------------------------------------------------------------");
 
                 while (rs.next()) {
                     String pno = rs.getString("Pno");
@@ -34,7 +34,7 @@ public class EmployeeProjectUpdate {
                     String lname = rs.getString("Lname");
                     String hours = rs.getString("Hours");
                     // 테이블 형식으로 직원 정보 출력
-                    System.out.printf("%-10s %-20s %-20s %-20s %-6s %-20s %-5s %n",
+                    System.out.printf("%-10s | %-20s | %-20s | %-20s | %-6s | %-20s | %-5s %n",
                             pno, pname, essn, fname, minit, lname, hours);
                 }
 
@@ -50,9 +50,9 @@ public class EmployeeProjectUpdate {
                 PreparedStatement pstmt = conn.prepareStatement(project_list_query);
                 // 쿼리 실행 및 결과 출력
                 rs = pstmt.executeQuery();
-                System.out.printf("%-10s %-20s %-15s%n",
+                System.out.printf("%-10s | %-20s | %-15s%n",
                         "Pnumber", "Pname", "Plocation");
-                System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+                System.out.println("----------------------------------------------------");
 
                 while (rs.next()) {
                     String pname = rs.getString("Pname");
@@ -60,7 +60,7 @@ public class EmployeeProjectUpdate {
                     String plocation = rs.getString("Plocation");
 
                     // 테이블 형식으로 직원 정보 출력
-                    System.out.printf("%-10s %-20s %-15s%n",
+                    System.out.printf("%-10s | %-20s | %-15s%n",
                             pnumber,pname, plocation);
                 }
                 project_flag = true;

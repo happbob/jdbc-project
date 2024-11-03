@@ -5,6 +5,7 @@ import Database.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -33,10 +34,29 @@ public class EmployeeUpdate {
             }
         }
 
+        // 수정 전 데이터 조회
+        String selectQuery = "SELECT " + attribute + " FROM employee WHERE Ssn = ?";
         String query = "UPDATE employee SET " + attribute + " = ? WHERE Ssn = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            // 기존 값 조회
+            selectStmt.setString(1, ssn);
+            ResultSet rs = selectStmt.executeQuery();
+            if (rs.next()) {
+                String oldValue = rs.getString(attribute);
+
+                // 수정 전 데이터 출력
+                System.out.println("\n[Before]");
+                System.out.printf("%-15s | %-15s\n", "Attribute", "Value");
+                System.out.println("-------------------------------");
+                System.out.printf("%-15s | %-15s\n", attribute, oldValue);
+            } else {
+                System.out.println("해당 Ssn을 가진 직원이 없습니다.");
+                return;
+            }
 
             // PreparedStatement에 파라미터 설정
             setPreparedStatementParameter(pstmt, 1, attribute, newValue);
@@ -45,9 +65,21 @@ public class EmployeeUpdate {
             // 업데이트 쿼리 실행
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.println("직원 정보가 성공적으로 수정되었습니다.");
+
+                // 수정 후 데이터 조회
+                ResultSet afterRs = selectStmt.executeQuery();
+                if (afterRs.next()) {
+                    String updatedValue = afterRs.getString(attribute);
+
+                    // 수정 후 데이터 출력
+                    System.out.println("\n[After]");
+                    System.out.printf("%-15s | %-15s\n", "Attribute", "Value");
+                    System.out.println("-------------------------------");
+                    System.out.printf("%-15s | %-15s\n", attribute, updatedValue);
+                    System.out.println("\n직원 정보가 성공적으로 수정되었습니다.");
+                }
             } else {
-                System.out.println("해당 Ssn을 가진 직원이 없습니다.");
+                System.out.println("업데이트 중 오류가 발생했습니다.");
             }
 
 

@@ -4,6 +4,7 @@ import Database.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -47,8 +48,10 @@ public class EmployeeAdd {
         // SQL 쿼리 수정
         String query = "INSERT INTO EMPLOYEE (Fname, minit, Lname, Ssn, Bdate, Address, Sex, Salary, super_ssn, Dno) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String selectQuery = "SELECT * FROM EMPLOYEE WHERE Ssn = ?";
 
         try (Connection conn = DatabaseConnection.connection;
+             PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             pstmt.setString(1, fname);
@@ -65,6 +68,21 @@ public class EmployeeAdd {
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
                 System.out.println("직원 추가 완료");
+                // 추가한 직원 정보 조회
+                selectStmt.setString(1, ssn);
+                ResultSet rs = selectStmt.executeQuery();
+
+                if (rs.next()) {
+                    // 추가한 직원 정보 출력 (테이블 형식)
+                    System.out.println("\n[추가한 직원 정보]");
+                    System.out.printf("%-10s | %-10s | %-10s | %-10s | %-10s | %-22s | %-10s | %-10s | %-10s\n",
+                            "Ssn", "Fname", "Minit", "Lname", "Bdate", "Address", "Sex", "Salary", "Dno");
+                    System.out.println("----------------------------------------------------------------------------------------------------------------------");
+                    System.out.printf("%-10s | %-10s | %-10s | %-10s | %-10s | %-22s | %-10s | %-10.2f | %-10s\n",
+                            rs.getString("Ssn"), rs.getString("Fname"), rs.getString("Minit"), rs.getString("Lname"),
+                            rs.getDate("Bdate"), rs.getString("Address"), rs.getString("Sex"),
+                            rs.getDouble("Salary"), rs.getInt("Dno"));
+                }
             } else {
                 System.out.println("직원 추가 실패");
             }
