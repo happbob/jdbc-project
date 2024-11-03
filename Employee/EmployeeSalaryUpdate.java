@@ -36,7 +36,7 @@ public class EmployeeSalaryUpdate {
         String ssn = scanner.nextLine();
         double percent = getValidPercentage(scanner);
 
-        displaySalaryBeforeAfter("Ssn", ssn, percent);
+        executeSalaryUpdate("UPDATE EMPLOYEE SET Salary = Salary * (1 + ?) WHERE Ssn = ?", percent / 100, ssn);
     }
 
     // 입력받은 부서명에 속한 모든 직원의 연봉을 인상
@@ -45,14 +45,13 @@ public class EmployeeSalaryUpdate {
         String departmentName = scanner.nextLine();
         double percent = getValidPercentage(scanner);
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement deptStmt = conn.prepareStatement("SELECT Dnumber FROM DEPARTMENT WHERE Dname = ?")) {
+        try (PreparedStatement deptStmt = DatabaseConnection.connection.prepareStatement("SELECT Dnumber FROM DEPARTMENT WHERE Dname = ?")) {
             deptStmt.setString(1, departmentName);
             ResultSet rs = deptStmt.executeQuery();
 
             if (rs.next()) {
                 int departmentId = rs.getInt("Dnumber");
-                displaySalaryBeforeAfter("Dno", departmentId, percent);
+                executeSalaryUpdate("UPDATE EMPLOYEE SET Salary = Salary * (1 + ?) WHERE Dno = ?", percent / 100, departmentId);
             } else {
                 System.out.println("부서 \"" + departmentName + "\"이 존재하지 않습니다.\n");
             }
@@ -81,51 +80,65 @@ public class EmployeeSalaryUpdate {
         return percentage;
     }
 
-    // 연봉 인상 전과 후를 조회 및 출력하는 메서드
-    private void displaySalaryBeforeAfter(String identifierType, Object identifier, double percent) {
-        String selectQuery = "SELECT Ssn, Fname, Salary FROM EMPLOYEE WHERE " + identifierType + " = ?";
-        String updateQuery = "UPDATE EMPLOYEE SET Salary = Salary * (1 + ?) WHERE " + identifierType + " = ?";
+    // 연봉 업데이트를 공통으로 처리하는 메서드
+    private void executeSalaryUpdate(String sql, double percent, Object identifier) {
+        // 업데이트 이전의 급여를 조회하기 위한 쿼리 작성
+        String selectSql = "SELECT Fname, Minit, Lname, Salary FROM EMPLOYEE WHERE " +
+                (identifier instanceof String ? "Ssn = ?" : "Dno = ?");
+        boolean isDepartment = identifier instanceof Integer; // 부서 인상인지 여부
+        boolean updateSuccess = false;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
-             PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
-
-            if (identifier instanceof String) {
-                selectStmt.setString(1, (String) identifier);
-                updateStmt.setString(2, (String) identifier);
-            } else {
+        try (PreparedStatement selectStmt = DatabaseConnection.connection.prepareStatement(selectSql)) {
+            // identifier가 SSN-문자열인 경우와 부서-부서 번호(int)인 경우에 따라 설정
+            if (isDepartment) {
                 selectStmt.setInt(1, (Integer) identifier);
-                updateStmt.setInt(2, (Integer) identifier);
+            } else {
+                selectStmt.setString(1, (String) identifier);
             }
 
-            // 연봉 인상 전의 데이터 조회
-            ResultSet rs = selectStmt.executeQuery();
-            System.out.println("\n[연봉 인상 전]");
-            System.out.printf("%-10s | %-10s | %-10s\n", "Ssn", "Fname", "Salary");
-            System.out.println("-------------------------------");
-            while (rs.next()) {
-                System.out.printf("%-10s | %-10s | %-10.2f\n", rs.getString("Ssn"), rs.getString("Fname"), rs.getDouble("Salary"));
+            ResultSet resultSet = selectStmt.executeQuery();
+
+            // 변경 전후 급여 출력
+            while (resultSet.next()) {
+                String firstName = resultSet.getString("Fname");
+                String middleInit = resultSet.getString("Minit");
+                String lastName = resultSet.getString("Lname");
+                double oldSalary = resultSet.getDouble("Salary");
+                double newSalary = oldSalary * (1 + percent);
+
+                // 각 직원의 급여 업데이트
+                try (PreparedStatement updateStmt = DatabaseConnection.connection.prepareStatement(sql)) {
+                    updateStmt.setDouble(1, percent);
+                    if (isDepartment) {
+                        updateStmt.setInt(2, (Integer) identifier);
+                    } else {
+                        updateStmt.setString(2, (String) identifier);
+                    }
+
+                    int rowsUpdated = updateStmt.executeUpdate();
+                    if (rowsUpdated > 0) {
+                        System.out.printf("\n직원 이름: %s %s %s\n변경 전 연봉: %.2f\n변경 후 연봉: %.2f\n",
+                                firstName, middleInit, lastName, oldSalary, newSalary);
+                        updateSuccess = true;
+
+                        // SSN 옵션의 경우, 업데이트 성공 메시지 출력
+                        if (!isDepartment) {
+                            System.out.println("\n직원의 연봉이 성공적으로 인상되었습니다.\n");
+                        }
+                    }
+                }
             }
 
-            // 연봉 업데이트 실행
-            updateStmt.setDouble(1, percent / 100);
-            int rowsUpdated = updateStmt.executeUpdate();
-
-            // 업데이트 후의 데이터 조회
-            ResultSet rsAfter = selectStmt.executeQuery();
-            System.out.println("\n[연봉 인상 후]");
-            System.out.printf("%-10s | %-10s | %-10s\n", "Ssn", "Fname", "Salary");
-            System.out.println("-------------------------------");
-            while (rsAfter.next()) {
-                System.out.printf("%-10s | %-10s | %-10.2f\n", rsAfter.getString("Ssn"), rsAfter.getString("Fname"), rsAfter.getDouble("Salary"));
+            if (!updateSuccess) {
+                System.out.println("\n해당 직원 또는 부서를 찾을 수 없습니다!\n");
+            } else if (isDepartment) {
+                System.out.println("\n모든 직원의 연봉이 성공적으로 인상되었습니다.\n");
             }
-
-            System.out.println(rowsUpdated > 0 ? "\n연봉이 성공적으로 업데이트되었습니다.\n" : "\n해당 직원을 찾을 수 없습니다!\n");
-
         } catch (SQLException e) {
             printSQLException(e);
         }
     }
+
 
     // SQL 예외 처리 메시지 통합
     private void printSQLException(SQLException ex) {
