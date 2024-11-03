@@ -9,6 +9,7 @@ import java.util.Scanner;
 public class EmployeeSalarySearch {
     public void findEmployeesBySalaryRange() {
         Scanner scanner = new Scanner(System.in);
+        Connection conn = DatabaseConnection.connection;
 
         // 사용자로부터 급여 범위 입력받기
         System.out.print("검색할 최소 급여를 입력하세요: ");
@@ -19,8 +20,7 @@ public class EmployeeSalarySearch {
         String query = "SELECT Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Super_ssn, Dno, created, modified " +
                 "FROM employee WHERE Salary BETWEEN ? AND ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             // SQL 문의 파라미터 설정
             pstmt.setDouble(1, minSalary);

@@ -16,6 +16,7 @@ public class EmployeeReport {
 
     public void printAllEmployees() {
         Scanner scanner = new Scanner(System.in);
+        Connection conn = DatabaseConnection.connection;
 
         // 1. 검색 항목 선택
         System.out.println("조회할 항목을 선택하세요 (콤마로 구분):");
@@ -33,8 +34,7 @@ public class EmployeeReport {
         String query = "SELECT " + selectClause + " FROM EMPLOYEE E " +
                 "JOIN DEPARTMENT D ON E.Dno = D.Dnumber";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
+        try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
             //테이블 출력 결과

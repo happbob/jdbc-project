@@ -38,7 +38,7 @@ public class EmployeeHourlyWage {
                         """;
             }
             case 2 -> {
-                System.out.print("Enter Employee Ssn: ");
+                System.out.print("Ssn 입력: ");
                 param = scanner.nextLine();
                 query = """
                         SELECT e.Fname, e.Minit, e.Lname,
@@ -53,7 +53,7 @@ public class EmployeeHourlyWage {
                         """;
             }
             case 3 -> {
-                System.out.print("Enter Department Name: ");
+                System.out.print("부서명 입력: ");
                 param = scanner.nextLine();
                 query = """
                         SELECT e.Fname, e.Minit, e.Lname,
@@ -74,8 +74,8 @@ public class EmployeeHourlyWage {
             }
         }
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        try(PreparedStatement pstmt = DatabaseConnection.connection.prepareStatement(query);) {
+
 
             if (choice == 2 || choice == 3) {
                 pstmt.setString(1, param);

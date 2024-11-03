@@ -13,12 +13,12 @@ public class EmployeeDelete {
         Scanner scanner = new Scanner(System.in);
         System.out.print("삭제할 직원의 Ssn을 입력하세요: ");
         String ssn = scanner.nextLine();
+        Connection conn = DatabaseConnection.connection;
 
         String selectQuery = "SELECT * FROM EMPLOYEE WHERE Ssn = ?";
         String deleteQuery = "DELETE FROM EMPLOYEE WHERE Ssn = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
+        try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
              PreparedStatement deleteStmt = conn.prepareStatement(deleteQuery)) {
 
             // 삭제할 직원 정보 조회
