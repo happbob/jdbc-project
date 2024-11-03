@@ -18,8 +18,8 @@ public class EmployeeController {
         System.out.println("[도우미] : 직원 조회 메뉴 번호를 선택해주세요...");
         Scanner scanner = new Scanner(System.in);
         System.out.println("1. 직원 전체 조회");
-        System.out.println("2. 직원 조건 검색");
-        System.out.println("3. 그룹별 평균 급여 조회");
+        System.out.println("2. 직원 연봉 조건 검색");
+        System.out.println("3. 직원 조건 검색 & 그룹별 평균 급여 조회");
         while(flag){
             flag = false;
             System.out.println();

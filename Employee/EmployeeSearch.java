@@ -43,9 +43,6 @@ public class EmployeeSearch {
         } else if (rangeType.equalsIgnoreCase("상급자")) {
             System.out.print("상급자의 Ssn을 입력하세요: ");
             whereClause = "E.super_ssn = ?";
-        } else if (rangeType.equalsIgnoreCase("연봉")) {
-            System.out.print("검색할 최소 연봉을 입력하세요: ");
-            whereClause = "E.Salary >= ?";
         } else if (rangeType.equalsIgnoreCase("전체")) {
             System.out.println("전체 직원 정보를 검색합니다.");
             whereClause = "";
