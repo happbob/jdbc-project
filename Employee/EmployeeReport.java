@@ -7,7 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class EmployeeReport {
@@ -35,12 +37,44 @@ public class EmployeeReport {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
-            System.out.println("\n[검색 결과]");
+            //테이블 출력 결과
+            // 각 행의 데이터를 저장할 리스트와 열 너비 계산을 위한 맵
+            List<Map<String, String>> rows = new ArrayList<>();
+            Map<String, Integer> columnWidths = new HashMap<>();
+
+            // 초기 열 너비를 각 열 이름 길이로 설정
+            for (String column : selectedColumns) {
+                columnWidths.put(column, column.length());
+            }
+
+            // 결과 데이터를 한 번 순회하며 열 너비 계산 및 행 저장
             while (rs.next()) {
+                Map<String, String> row = new HashMap<>();
                 for (String column : selectedColumns) {
-                    System.out.print(column + ": " + rs.getString(column) + " ");
+                    String value = rs.getString(column);
+                    row.put(column, value);
+
+                    // 각 열의 최대 너비 갱신
+                    int length = value.length();
+                    if (length > columnWidths.get(column)) {
+                        columnWidths.put(column, length);
+                    }
                 }
-                System.out.println("\n-----------------------");
+                rows.add(row); // 현재 행을 리스트에 추가
+            }
+
+            // 테이블 헤더 출력
+            for (String column : selectedColumns) {
+                System.out.printf("%-" + columnWidths.get(column) + "s | ", column);
+            }
+            System.out.println("\n" + "-".repeat(columnWidths.values().stream().mapToInt(Integer::intValue).sum() + selectedColumns.size() * 3));
+
+            // 저장된 각 행 데이터 출력
+            for (Map<String, String> row : rows) {
+                for (String column : selectedColumns) {
+                    System.out.printf("%-" + columnWidths.get(column) + "s | ", row.get(column));
+                }
+                System.out.println();
             }
         } catch (SQLException e) {
             e.printStackTrace();

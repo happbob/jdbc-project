@@ -36,7 +36,7 @@ public class EmployeeSalaryUpdate {
         String ssn = scanner.nextLine();
         double percent = getValidPercentage(scanner);
 
-        executeSalaryUpdate("UPDATE EMPLOYEE SET Salary = Salary * (1 + ?) WHERE Ssn = ?", percent / 100, ssn);
+        displaySalaryBeforeAfter("Ssn", ssn, percent);
     }
 
     // 입력받은 부서명에 속한 모든 직원의 연봉을 인상
@@ -45,13 +45,14 @@ public class EmployeeSalaryUpdate {
         String departmentName = scanner.nextLine();
         double percent = getValidPercentage(scanner);
 
-        try (PreparedStatement deptStmt = DatabaseConnection.connection.prepareStatement("SELECT Dnumber FROM DEPARTMENT WHERE Dname = ?")) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement deptStmt = conn.prepareStatement("SELECT Dnumber FROM DEPARTMENT WHERE Dname = ?")) {
             deptStmt.setString(1, departmentName);
             ResultSet rs = deptStmt.executeQuery();
 
             if (rs.next()) {
                 int departmentId = rs.getInt("Dnumber");
-                executeSalaryUpdate("UPDATE EMPLOYEE SET Salary = Salary * (1 + ?) WHERE Dno = ?", percent / 100, departmentId);
+                displaySalaryBeforeAfter("Dno", departmentId, percent);
             } else {
                 System.out.println("부서 \"" + departmentName + "\"이 존재하지 않습니다.\n");
             }
@@ -80,19 +81,47 @@ public class EmployeeSalaryUpdate {
         return percentage;
     }
 
-    // 연봉 업데이트를 공통으로 처리하는 메서드
-    private void executeSalaryUpdate(String sql, double percent, Object identifier) {
-        try (PreparedStatement preparedStatement = DatabaseConnection.connection.prepareStatement(sql)) {
-            preparedStatement.setDouble(1, percent);
+    // 연봉 인상 전과 후를 조회 및 출력하는 메서드
+    private void displaySalaryBeforeAfter(String identifierType, Object identifier, double percent) {
+        String selectQuery = "SELECT Ssn, Fname, Salary FROM EMPLOYEE WHERE " + identifierType + " = ?";
+        String updateQuery = "UPDATE EMPLOYEE SET Salary = Salary * (1 + ?) WHERE " + identifierType + " = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
+             PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
 
             if (identifier instanceof String) {
-                preparedStatement.setString(2, (String) identifier);
+                selectStmt.setString(1, (String) identifier);
+                updateStmt.setString(2, (String) identifier);
             } else {
-                preparedStatement.setInt(2, (Integer) identifier);
+                selectStmt.setInt(1, (Integer) identifier);
+                updateStmt.setInt(2, (Integer) identifier);
             }
 
-            int rowsUpdated = preparedStatement.executeUpdate();
+            // 연봉 인상 전의 데이터 조회
+            ResultSet rs = selectStmt.executeQuery();
+            System.out.println("\n[연봉 인상 전]");
+            System.out.printf("%-10s | %-10s | %-10s\n", "Ssn", "Fname", "Salary");
+            System.out.println("-------------------------------");
+            while (rs.next()) {
+                System.out.printf("%-10s | %-10s | %-10.2f\n", rs.getString("Ssn"), rs.getString("Fname"), rs.getDouble("Salary"));
+            }
+
+            // 연봉 업데이트 실행
+            updateStmt.setDouble(1, percent / 100);
+            int rowsUpdated = updateStmt.executeUpdate();
+
+            // 업데이트 후의 데이터 조회
+            ResultSet rsAfter = selectStmt.executeQuery();
+            System.out.println("\n[연봉 인상 후]");
+            System.out.printf("%-10s | %-10s | %-10s\n", "Ssn", "Fname", "Salary");
+            System.out.println("-------------------------------");
+            while (rsAfter.next()) {
+                System.out.printf("%-10s | %-10s | %-10.2f\n", rsAfter.getString("Ssn"), rsAfter.getString("Fname"), rsAfter.getDouble("Salary"));
+            }
+
             System.out.println(rowsUpdated > 0 ? "\n연봉이 성공적으로 업데이트되었습니다.\n" : "\n해당 직원을 찾을 수 없습니다!\n");
+
         } catch (SQLException e) {
             printSQLException(e);
         }

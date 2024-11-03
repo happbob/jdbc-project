@@ -82,12 +82,12 @@ public class EmployeeHourlyWage {
             }
 
             ResultSet rs = pstmt.executeQuery();
-
-            System.out.printf("%-15s %-5s %-15s %-15s %-15s %-15s %-15s\n",
+            System.out.printf("%-10s | %-10s | %-10s | %-15s | %-15s | %-15s | %-15s\n",
                     "First Name", "M", "Last Name", "Project Count", "Salary", "Total Hours", "Hourly Wage");
+            System.out.println("------------------------------------------------------------------------------------------------");
 
             while (rs.next()) {
-                System.out.printf("%-15s %-5s %-15s %-15d %-15.2f %-15.1f %-15.2f\n",
+                System.out.printf("%-10s | %-10s | %-10s | %-15s | %-15s | %-15s | %-15s\n",
                         rs.getString("Fname"),
                         rs.getString("Minit"),
                         rs.getString("Lname"),

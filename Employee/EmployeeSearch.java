@@ -7,7 +7,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class EmployeeSearch {
@@ -69,17 +71,40 @@ public class EmployeeSearch {
 
             ResultSet rs = pstmt.executeQuery();
 
-            System.out.println("\n[검색 결과]");
-            boolean hasResults = false;
-            while (rs.next()) {
-                hasResults = true;
-                for (String column : selectedColumns) {
-                    System.out.print(column + ": " + rs.getString(column) + " ");
-                }
-                System.out.println("\n-----------------------");
+            //테이블 출력 결과
+            // 열 너비 계산
+            Map<String, Integer> columnWidths = new HashMap<>();
+            for (String column : selectedColumns) {
+                columnWidths.put(column, column.length());
             }
-            if (!hasResults) {
+
+            List<Map<String, String>> rows = new ArrayList<>();
+            while (rs.next()) {
+                Map<String, String> row = new HashMap<>();
+                for (String column : selectedColumns) {
+                    String value = rs.getString(column);
+                    row.put(column, value);
+                    columnWidths.put(column, Math.max(columnWidths.get(column), value.length()));
+                }
+                rows.add(row);
+            }
+
+            // 검색 결과 출력
+            System.out.println("\n[검색 결과]");
+            if (rows.isEmpty()) {
                 System.out.println("검색 결과가 없습니다.");
+            } else {
+                for (String column : selectedColumns) {
+                    System.out.printf("%-" + columnWidths.get(column) + "s | ", column);
+                }
+                System.out.println("\n" + "-".repeat(columnWidths.values().stream().mapToInt(Integer::intValue).sum() + selectedColumns.size() * 3));
+
+                for (Map<String, String> row : rows) {
+                    for (String column : selectedColumns) {
+                        System.out.printf("%-" + columnWidths.get(column) + "s | ", row.get(column));
+                    }
+                    System.out.println();
+                }
             }
 
         } catch (SQLException e) {
@@ -116,11 +141,31 @@ public class EmployeeSearch {
 
                 ResultSet avgRs = avgStmt.executeQuery();
 
-                System.out.println("\n[그룹별 평균 급여 결과]");
+                // 열 너비 설정
+                int groupWidth = Math.max(groupByClause.length(), "Group".length());
+                int avgWidth = "Average Salary".length();
+
+                List<Map<String, String>> avgRows = new ArrayList<>();
                 while (avgRs.next()) {
-                    System.out.println("Group: " + avgRs.getString("GroupField"));
-                    System.out.println("Average Salary: " + avgRs.getDouble("AverageSalary"));
-                    System.out.println("-----------------------");
+                    Map<String, String> avgRow = new HashMap<>();
+                    String groupField = avgRs.getString("GroupField");
+                    String avgSalary = String.format("%.2f", avgRs.getDouble("AverageSalary"));
+
+                    avgRow.put("Group", groupField);
+                    avgRow.put("Average Salary", avgSalary);
+
+                    groupWidth = Math.max(groupWidth, groupField.length());
+                    avgWidth = Math.max(avgWidth, avgSalary.length());
+                    avgRows.add(avgRow);
+                }
+
+                // 그룹별 평균 급여 출력
+                System.out.println("\n[그룹별 평균 급여 결과]");
+                System.out.printf("%-" + groupWidth + "s | %-" + avgWidth + "s\n", "Group", "Average Salary");
+                System.out.println("-".repeat(groupWidth + avgWidth + 3));
+
+                for (Map<String, String> avgRow : avgRows) {
+                    System.out.printf("%-" + groupWidth + "s | %-" + avgWidth + "s\n", avgRow.get("Group"), avgRow.get("Average Salary"));
                 }
 
             } catch (SQLException e) {
