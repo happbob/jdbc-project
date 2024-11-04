@@ -17,6 +17,7 @@ public class EmployeeSearch {
     // 검색 범위와 그룹별 평균 급여 조건을 모두 적용하여 출력
     public void searchEmployeesWithOptions() {
         Scanner scanner = new Scanner(System.in);
+        Connection conn = DatabaseConnection.connection;
 
         // 1. 검색 항목 선택
         System.out.println("조회할 항목을 선택하세요 (콤마로 구분):");
@@ -56,8 +57,7 @@ public class EmployeeSearch {
                 "JOIN DEPARTMENT D ON E.Dno = D.Dnumber " +
                 (whereClause.isEmpty() ? "" : "WHERE " + whereClause);
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             // 검색 범위에 대한 입력값 설정
             if (!whereClause.isEmpty() && !rangeType.equalsIgnoreCase("전체")) {
@@ -94,7 +94,8 @@ public class EmployeeSearch {
                 for (String column : selectedColumns) {
                     System.out.printf("%-" + columnWidths.get(column) + "s | ", column);
                 }
-                System.out.println("\n" + "-".repeat(columnWidths.values().stream().mapToInt(Integer::intValue).sum() + selectedColumns.size() * 3));
+                System.out.println("\n" + "-".repeat(
+                        columnWidths.values().stream().mapToInt(Integer::intValue).sum() + selectedColumns.size() * 3));
 
                 for (Map<String, String> row : rows) {
                     for (String column : selectedColumns) {
@@ -133,8 +134,7 @@ public class EmployeeSearch {
                     "JOIN DEPARTMENT D ON E.Dno = D.Dnumber " +
                     "GROUP BY " + groupByClause;
 
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement avgStmt = conn.prepareStatement(avgQuery)) {
+            try (PreparedStatement avgStmt = conn.prepareStatement(avgQuery)) {
 
                 ResultSet avgRs = avgStmt.executeQuery();
 
@@ -143,27 +143,34 @@ public class EmployeeSearch {
                 int avgWidth = "Average Salary".length();
 
                 List<Map<String, String>> avgRows = new ArrayList<>();
+
                 while (avgRs.next()) {
                     Map<String, String> avgRow = new HashMap<>();
                     String groupField = avgRs.getString("GroupField");
                     String avgSalary = String.format("%.2f", avgRs.getDouble("AverageSalary"));
 
-                    avgRow.put("Group", groupField);
-                    avgRow.put("Average Salary", avgSalary);
+                    if (groupField==null){
+                        System.out.println("\n검색 결과가 존재하지 않습니다.");
+                        break;
+                    }
+                    else {
+                        avgRow.put("Group", groupField);
+                        avgRow.put("Average Salary", avgSalary);
 
-                    groupWidth = Math.max(groupWidth, groupField.length());
-                    avgWidth = Math.max(avgWidth, avgSalary.length());
-                    avgRows.add(avgRow);
+                        groupWidth = Math.max(groupWidth, groupField.length());
+                        avgWidth = Math.max(avgWidth, avgSalary.length());
+                        avgRows.add(avgRow);
+                    }
                 }
-
-                // 그룹별 평균 급여 출력
                 System.out.println("\n[그룹별 평균 급여 결과]");
                 System.out.printf("%-" + groupWidth + "s | %-" + avgWidth + "s\n", "Group", "Average Salary");
                 System.out.println("-".repeat(groupWidth + avgWidth + 3));
 
                 for (Map<String, String> avgRow : avgRows) {
-                    System.out.printf("%-" + groupWidth + "s | %-" + avgWidth + "s\n", avgRow.get("Group"), avgRow.get("Average Salary"));
+                    System.out.printf("%-" + groupWidth + "s | %-" + avgWidth + "s\n", avgRow.get("Group"),
+                            avgRow.get("Average Salary"));
                 }
+
 
             } catch (SQLException e) {
                 e.printStackTrace();

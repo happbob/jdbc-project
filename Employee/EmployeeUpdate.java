@@ -13,6 +13,7 @@ public class EmployeeUpdate {
 
     public void updateEmployeeAttribute() {
         Scanner scanner = new Scanner(System.in);
+        Connection conn = DatabaseConnection.connection;
 
         // 수정할 직원의 Ssn, 속성 이름, 새로운 값 입력받기
         System.out.print("수정할 직원의 Ssn을 입력하세요: ");
@@ -38,8 +39,7 @@ public class EmployeeUpdate {
         String selectQuery = "SELECT " + attribute + " FROM employee WHERE Ssn = ?";
         String query = "UPDATE employee SET " + attribute + " = ? WHERE Ssn = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
+        try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             // 기존 값 조회
