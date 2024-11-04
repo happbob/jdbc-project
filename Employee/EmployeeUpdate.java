@@ -15,7 +15,6 @@ public class EmployeeUpdate {
         Scanner scanner = new Scanner(System.in);
         Connection conn = DatabaseConnection.connection;
 
-        // 수정할 직원의 Ssn, 속성 이름, 새로운 값 입력받기
         System.out.print("수정할 직원의 Ssn을 입력하세요: ");
         String ssn = scanner.nextLine();
 
@@ -27,7 +26,6 @@ public class EmployeeUpdate {
             System.out.print("새로운 값을 입력하세요: ");
             newValue = scanner.nextLine();
 
-            // 도메인 검증: 각 속성에 대한 유효성 검사
             if (isValid(attribute, newValue)) {
                 break;
             } else {
@@ -35,20 +33,17 @@ public class EmployeeUpdate {
             }
         }
 
-        // 수정 전 데이터 조회
         String selectQuery = "SELECT " + attribute + " FROM employee WHERE Ssn = ?";
         String query = "UPDATE employee SET " + attribute + " = ? WHERE Ssn = ?";
 
         try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            // 기존 값 조회
             selectStmt.setString(1, ssn);
             ResultSet rs = selectStmt.executeQuery();
             if (rs.next()) {
                 String oldValue = rs.getString(attribute);
 
-                // 수정 전 데이터 출력
                 System.out.println("\n[Before]");
                 System.out.printf("%-15s | %-15s\n", "Attribute", "Value");
                 System.out.println("-------------------------------");
@@ -58,20 +53,16 @@ public class EmployeeUpdate {
                 return;
             }
 
-            // PreparedStatement에 파라미터 설정
             setPreparedStatementParameter(pstmt, 1, attribute, newValue);
             pstmt.setString(2, ssn);
 
-            // 업데이트 쿼리 실행
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
 
-                // 수정 후 데이터 조회
                 ResultSet afterRs = selectStmt.executeQuery();
                 if (afterRs.next()) {
                     String updatedValue = afterRs.getString(attribute);
 
-                    // 수정 후 데이터 출력
                     System.out.println("\n[After]");
                     System.out.printf("%-15s | %-15s\n", "Attribute", "Value");
                     System.out.println("-------------------------------");
@@ -81,7 +72,6 @@ public class EmployeeUpdate {
             } else {
                 System.out.println("업데이트 중 오류가 발생했습니다.");
             }
-
 
         } catch (SQLException e) {
             e.printStackTrace();
