@@ -12,6 +12,7 @@ public class EmployeeController {
     private static final EmployeeUpdate employeeUpdate = new EmployeeUpdate();
     private static final EmployeeHourlyWage employeeHourlyWage = new EmployeeHourlyWage();
     private static final EmployeeProjectUpdate employeeProjectUpdate = new EmployeeProjectUpdate();
+    private static final EmployeeDeptChange employeeDeptChange = new EmployeeDeptChange();
 
     public void getController(){
         boolean flag = true;
@@ -54,6 +55,8 @@ public class EmployeeController {
         System.out.println("4. 직원 급여 인상");
         System.out.println("5. 시급 계산");
         System.out.println("6. 직원 프로젝트 업데이트");
+        System.out.println("7. 직원 부서 변경");
+
         while(flag){
             flag = false;
             System.out.println();
@@ -80,8 +83,11 @@ public class EmployeeController {
                 case "6":
                     employeeProjectUpdate.updateEmployeeProject();
                     break;
+                case "7":
+                    employeeDeptChange.changeEmployeeDept();
+                    break;
                 default:
-                    System.out.println("[도우미] 잘못된 입력입니다. 1~5사이의 숫자만 입력해주세요.");
+                    System.out.println("[도우미] 잘못된 입력입니다. 1~7사이의 숫자만 입력해주세요.");
                     flag = true;
             }
         }
