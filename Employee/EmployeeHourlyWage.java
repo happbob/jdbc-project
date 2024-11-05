@@ -25,7 +25,6 @@ public class EmployeeHourlyWage {
 
         switch (choice) {
             case 1 -> {
-                // No specific filter
                 query = """
                         SELECT e.Fname, e.Minit, e.Lname,
                                COUNT(w.Pno) AS ProjectCount,
@@ -74,7 +73,7 @@ public class EmployeeHourlyWage {
             }
         }
 
-        try(PreparedStatement pstmt = DatabaseConnection.connection.prepareStatement(query);) {
+        try (PreparedStatement pstmt = DatabaseConnection.connection.prepareStatement(query)) {
 
 
             if (choice == 2 || choice == 3) {
