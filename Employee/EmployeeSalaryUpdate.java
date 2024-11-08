@@ -22,7 +22,7 @@ public class EmployeeSalaryUpdate {
             if ("ssn".equalsIgnoreCase(choice) || "1".equals(choice)) {
                 updateSalaryBySSN(scanner);
             } else if ("부서".equalsIgnoreCase(choice) || "2".equals(choice)) {
-                updateSalaryByDepartment(scanner);
+                updateSalaryByDept(scanner);
             } else {
                 System.out.println("\n직원 연봉 인상 프로그램을 종료합니다.\n");
                 return; // 프로그램 종료
@@ -34,26 +34,26 @@ public class EmployeeSalaryUpdate {
     private void updateSalaryBySSN(Scanner scanner) {
         System.out.print("직원의 SSN을 입력하세요. : ");
         String ssn = scanner.nextLine();
-        double percent = getValidPercentage(scanner);
+        double percent = getValidPercent(scanner);
 
         executeSalaryUpdate("UPDATE EMPLOYEE SET Salary = Salary * (1 + ?) WHERE Ssn = ?", percent / 100, ssn);
     }
 
     // 입력받은 부서명에 속한 모든 직원의 연봉을 인상
-    private void updateSalaryByDepartment(Scanner scanner) {
+    private void updateSalaryByDept(Scanner scanner) {
         System.out.print("연봉을 인상할 부서명을 입력하세요: ");
-        String departmentName = scanner.nextLine();
-        double percent = getValidPercentage(scanner);
+        String deptName = scanner.nextLine();
+        double percent = getValidPercent(scanner);
 
         try (PreparedStatement deptStmt = DatabaseConnection.connection.prepareStatement("SELECT Dnumber FROM DEPARTMENT WHERE Dname = ?")) {
-            deptStmt.setString(1, departmentName);
+            deptStmt.setString(1, deptName);
             ResultSet rs = deptStmt.executeQuery();
 
             if (rs.next()) {
                 int departmentId = rs.getInt("Dnumber");
                 executeSalaryUpdate("UPDATE EMPLOYEE SET Salary = Salary * (1 + ?) WHERE Dno = ?", percent / 100, departmentId);
             } else {
-                System.out.println("부서 \"" + departmentName + "\"이 존재하지 않습니다.\n");
+                System.out.println("부서 \"" + deptName + "\"이 존재하지 않습니다.\n");
             }
         } catch (SQLException e) {
             printSQLException(e);
@@ -61,7 +61,7 @@ public class EmployeeSalaryUpdate {
     }
 
     // 퍼센트 유효성 검사 메소드
-    private double getValidPercentage(Scanner scanner) {
+    private double getValidPercent(Scanner scanner) {
         double percentage = -1; // 초기화
         while (true) {
             try {
@@ -83,20 +83,19 @@ public class EmployeeSalaryUpdate {
     // 연봉 업데이트를 공통으로 처리하는 메서드
     private void executeSalaryUpdate(String sql, double percent, Object identifier) {
         // 업데이트 이전의 급여를 조회하기 위한 쿼리 작성
-        String selectSql = "SELECT Fname, Minit, Lname, Salary FROM EMPLOYEE WHERE " +
-                (identifier instanceof String ? "Ssn = ?" : "Dno = ?");
-        boolean isDepartment = identifier instanceof Integer; // 부서 인상인지 여부
+        String selectSql = "SELECT Fname, Minit, Lname, Salary FROM EMPLOYEE WHERE " + (identifier instanceof String ? "Ssn = ?" : "Dno = ?");
+        boolean isDept = identifier instanceof Integer; // 부서 인상인지 아닌지를 Integer인지 아닌지로 체크
         boolean updateSuccess = false;
 
-        try (PreparedStatement selectStmt = DatabaseConnection.connection.prepareStatement(selectSql)) {
+        try (PreparedStatement stmt = DatabaseConnection.connection.prepareStatement(selectSql)) {
             // identifier가 SSN-문자열인 경우와 부서-부서 번호(int)인 경우에 따라 설정
-            if (isDepartment) {
-                selectStmt.setInt(1, (Integer) identifier);
+            if (isDept) {
+                stmt.setInt(1, (Integer) identifier);
             } else {
-                selectStmt.setString(1, (String) identifier);
+                stmt.setString(1, (String) identifier);
             }
 
-            ResultSet resultSet = selectStmt.executeQuery();
+            ResultSet resultSet = stmt.executeQuery();
 
             // 변경 전후 급여 출력
             while (resultSet.next()) {
@@ -109,7 +108,7 @@ public class EmployeeSalaryUpdate {
                 // 각 직원의 급여 업데이트
                 try (PreparedStatement updateStmt = DatabaseConnection.connection.prepareStatement(sql)) {
                     updateStmt.setDouble(1, percent);
-                    if (isDepartment) {
+                    if (isDept) {
                         updateStmt.setInt(2, (Integer) identifier);
                     } else {
                         updateStmt.setString(2, (String) identifier);
@@ -121,8 +120,8 @@ public class EmployeeSalaryUpdate {
                                 firstName, middleInit, lastName, oldSalary, newSalary);
                         updateSuccess = true;
 
-                        // SSN 옵션의 경우, 업데이트 성공 메시지 출력
-                        if (!isDepartment) {
+                        // SSN 기준인 경우, 업데이트 성공 메시지 출력
+                        if (!isDept) {
                             System.out.println("\n직원의 연봉이 성공적으로 인상되었습니다.\n");
                         }
                     }
@@ -131,7 +130,7 @@ public class EmployeeSalaryUpdate {
 
             if (!updateSuccess) {
                 System.out.println("\n해당 직원 또는 부서를 찾을 수 없습니다!\n");
-            } else if (isDepartment) {
+            } else if (isDept) {
                 System.out.println("\n모든 직원의 연봉이 성공적으로 인상되었습니다.\n");
             }
         } catch (SQLException e) {
