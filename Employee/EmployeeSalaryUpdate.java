@@ -129,7 +129,7 @@ public class EmployeeSalaryUpdate {
             }
 
             if (!updateSuccess) {
-                System.out.println("\n해당 직원 또는 부서를 찾을 수 없습니다!\n");
+                System.out.println("\n해당 직원을 찾을 수 없습니다!\n");
             } else if (isDept) {
                 System.out.println("\n모든 직원의 연봉이 성공적으로 인상되었습니다.\n");
             }
