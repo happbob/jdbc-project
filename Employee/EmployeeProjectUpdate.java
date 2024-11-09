@@ -50,18 +50,19 @@ public class EmployeeProjectUpdate {
                 PreparedStatement pstmt = conn.prepareStatement(project_list_query);
                 // 쿼리 실행 및 결과 출력
                 rs = pstmt.executeQuery();
-                System.out.printf("%-10s | %-20s | %-15s%n",
-                        "Pnumber", "Pname", "Plocation");
-                System.out.println("----------------------------------------------------");
+                System.out.printf("%-10s | %-20s | %-15s | %-5s%n",
+                        "Pnumber", "Pname", "Plocation", "Dnum");
+                System.out.println("-----------------------------------------------------------");
 
                 while (rs.next()) {
                     String pname = rs.getString("Pname");
                     String pnumber = rs.getString("Pnumber");
                     String plocation = rs.getString("Plocation");
+                    String dnum = rs.getString("Dnum");
 
                     // 테이블 형식으로 직원 정보 출력
-                    System.out.printf("%-10s | %-20s | %-15s%n",
-                            pnumber,pname, plocation);
+                    System.out.printf("%-10s | %-20s | %-15s | %-5s%n",
+                            pnumber,pname, plocation, dnum);
                 }
                 project_flag = true;
 
