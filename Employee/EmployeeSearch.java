@@ -6,11 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class EmployeeSearch {
 
@@ -21,7 +17,7 @@ public class EmployeeSearch {
 
         // 1. 검색 항목 선택
         System.out.println("조회할 항목을 선택하세요 (콤마로 구분):");
-        System.out.println("예: Ssn, Fname, Lname, Salary, Dname, Bdate, Address, Sex, super_ssn");
+        System.out.println("예: Ssn, Fname, Minit, Lname, Salary, Dname, Bdate, Address, Sex, super_ssn");
         String[] columns = scanner.nextLine().split(",");
 
         List<String> selectedColumns = new ArrayList<>();
@@ -31,28 +27,36 @@ public class EmployeeSearch {
         String selectClause = String.join(", ", selectedColumns);
 
         // 2. 검색 범위 선택
-        System.out.print("검색 범위를 선택하세요 (전체/부서/성별/상급자/연봉): ");
+        System.out.print("검색 범위를 선택하세요 (전체/부서/성별/상급자): ");
         String rangeType = scanner.nextLine();
 
         String whereClause = "";
+        String inputValue = null;
+
+        // 검색 범위에 따른 where 절 처리
         if (rangeType.equalsIgnoreCase("부서")) {
             System.out.print("검색할 부서명을 입력하세요: ");
             whereClause = "D.Dname = ?";
+            inputValue = scanner.nextLine();
         } else if (rangeType.equalsIgnoreCase("성별")) {
             System.out.print("검색할 성별을 입력하세요 (M/F): ");
             whereClause = "E.Sex = ?";
+            inputValue = scanner.nextLine();
         } else if (rangeType.equalsIgnoreCase("상급자")) {
-            System.out.print("상급자의 Ssn을 입력하세요: ");
-            whereClause = "E.super_ssn = ?";
+            System.out.print("상급자의 Ssn을 입력하세요 (null 입력 시 조건 제외): ");
+            String superSsnInput = scanner.nextLine();
+            if (!superSsnInput.equalsIgnoreCase("null")) {
+                whereClause = "E.super_ssn = ?";
+                inputValue = superSsnInput;
+            }
         } else if (rangeType.equalsIgnoreCase("전체")) {
             System.out.println("전체 직원 정보를 검색합니다.");
-            whereClause = "";
         } else {
             System.out.println("잘못된 검색 범위입니다.");
             return;
         }
 
-        // 검색 결과를 표시하기 위해 쿼리 작성
+        // 검색 결과를 표시하기 위한 쿼리 작성
         String query = "SELECT " + selectClause + " FROM EMPLOYEE E " +
                 "JOIN DEPARTMENT D ON E.Dno = D.Dnumber " +
                 (whereClause.isEmpty() ? "" : "WHERE " + whereClause);
@@ -60,16 +64,13 @@ public class EmployeeSearch {
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             // 검색 범위에 대한 입력값 설정
-            if (!whereClause.isEmpty() && !rangeType.equalsIgnoreCase("전체")) {
-                System.out.print("입력값: ");
-                String inputValue = scanner.nextLine();
+            if (!whereClause.isEmpty() && inputValue != null) {
                 pstmt.setString(1, inputValue);
             }
 
             ResultSet rs = pstmt.executeQuery();
 
-            //테이블 출력 결과
-            // 열 너비 계산
+            // 테이블 출력 결과
             Map<String, Integer> columnWidths = new HashMap<>();
             for (String column : selectedColumns) {
                 columnWidths.put(column, column.length());
@@ -80,8 +81,8 @@ public class EmployeeSearch {
                 Map<String, String> row = new HashMap<>();
                 for (String column : selectedColumns) {
                     String value = rs.getString(column);
-                    row.put(column, value);
-                    columnWidths.put(column, Math.max(columnWidths.get(column), value.length()));
+                    row.put(column, value != null ? value : "NULL"); // NULL일 경우 "NULL"로 표시
+                    columnWidths.put(column, Math.max(columnWidths.get(column), row.get(column).length()));
                 }
                 rows.add(row);
             }
@@ -131,7 +132,8 @@ public class EmployeeSearch {
             // 그룹별 평균 급여를 위한 쿼리 작성
             String avgQuery = "SELECT " + groupByClause + " AS GroupField, AVG(E.Salary) AS AverageSalary " +
                     "FROM EMPLOYEE E " +
-                    "JOIN DEPARTMENT D ON E.Dno = D.Dnumber " +
+                    "LEFT JOIN DEPARTMENT D ON E.Dno = D.Dnumber " +
+                    "WHERE E.super_ssn IS NOT NULL " + // 상급자 SSN이 NULL이 아닌 경우만
                     "GROUP BY " + groupByClause;
 
             try (PreparedStatement avgStmt = conn.prepareStatement(avgQuery)) {
@@ -149,11 +151,10 @@ public class EmployeeSearch {
                     String groupField = avgRs.getString("GroupField");
                     String avgSalary = String.format("%.2f", avgRs.getDouble("AverageSalary"));
 
-                    if (groupField==null){
+                    if (groupField == null) {
                         System.out.println("\n검색 결과가 존재하지 않습니다.");
                         break;
-                    }
-                    else {
+                    } else {
                         avgRow.put("Group", groupField);
                         avgRow.put("Average Salary", avgSalary);
 
@@ -170,7 +171,6 @@ public class EmployeeSearch {
                     System.out.printf("%-" + groupWidth + "s | %-" + avgWidth + "s\n", avgRow.get("Group"),
                             avgRow.get("Average Salary"));
                 }
-
 
             } catch (SQLException e) {
                 e.printStackTrace();

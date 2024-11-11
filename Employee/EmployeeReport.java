@@ -20,7 +20,7 @@ public class EmployeeReport {
 
         // 1. 검색 항목 선택
         System.out.println("조회할 항목을 선택하세요 (콤마로 구분):");
-        System.out.println("예: Ssn, Fname, Lname, Salary, Dname, Bdate, Address, Sex, super_ssn");
+        System.out.println("예: Fname, Minit, Lname, Ssn, Salary, Dname, Bdate, Address, Sex, super_ssn");
         String[] columns = scanner.nextLine().split(",");
 
         List<String> selectedColumns = new ArrayList<>();
@@ -37,7 +37,6 @@ public class EmployeeReport {
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
-            //테이블 출력 결과
             // 각 행의 데이터를 저장할 리스트와 열 너비 계산을 위한 맵
             List<Map<String, String>> rows = new ArrayList<>();
             Map<String, Integer> columnWidths = new HashMap<>();
@@ -52,6 +51,12 @@ public class EmployeeReport {
                 Map<String, String> row = new HashMap<>();
                 for (String column : selectedColumns) {
                     String value = rs.getString(column);
+
+                    // NULL 값 처리
+                    if (value == null) {
+                        value = "NULL"; // NULL 값을 "NULL" 문자열로 대체
+                    }
+
                     row.put(column, value);
 
                     // 각 열의 최대 너비 갱신
