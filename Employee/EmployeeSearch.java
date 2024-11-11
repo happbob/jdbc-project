@@ -10,7 +10,6 @@ import java.util.*;
 
 public class EmployeeSearch {
 
-    // 검색 범위와 그룹별 평균 급여 조건을 모두 적용하여 출력
     public void searchEmployeesWithOptions() {
         Scanner scanner = new Scanner(System.in);
         Connection conn = DatabaseConnection.connection;
@@ -33,7 +32,6 @@ public class EmployeeSearch {
         String whereClause = "";
         String inputValue = null;
 
-        // 검색 범위에 따른 where 절 처리
         if (rangeType.equalsIgnoreCase("부서")) {
             System.out.print("검색할 부서명을 입력하세요: ");
             whereClause = "D.Dname = ?";
@@ -49,9 +47,7 @@ public class EmployeeSearch {
                 whereClause = "E.super_ssn = ?";
                 inputValue = superSsnInput;
             }
-        } else if (rangeType.equalsIgnoreCase("전체")) {
-            System.out.println("전체 직원 정보를 검색합니다.");
-        } else {
+        } else if (!rangeType.equalsIgnoreCase("전체")) {
             System.out.println("잘못된 검색 범위입니다.");
             return;
         }
@@ -62,8 +58,6 @@ public class EmployeeSearch {
                 (whereClause.isEmpty() ? "" : "WHERE " + whereClause);
 
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-
-            // 검색 범위에 대한 입력값 설정
             if (!whereClause.isEmpty() && inputValue != null) {
                 pstmt.setString(1, inputValue);
             }
@@ -81,7 +75,7 @@ public class EmployeeSearch {
                 Map<String, String> row = new HashMap<>();
                 for (String column : selectedColumns) {
                     String value = rs.getString(column);
-                    row.put(column, value != null ? value : "NULL"); // NULL일 경우 "NULL"로 표시
+                    row.put(column, value != null ? value : "NULL");
                     columnWidths.put(column, Math.max(columnWidths.get(column), row.get(column).length()));
                 }
                 rows.add(row);
@@ -133,7 +127,6 @@ public class EmployeeSearch {
             String avgQuery = "SELECT " + groupByClause + " AS GroupField, AVG(E.Salary) AS AverageSalary " +
                     "FROM EMPLOYEE E " +
                     "LEFT JOIN DEPARTMENT D ON E.Dno = D.Dnumber " +
-                    "WHERE E.super_ssn IS NOT NULL " + // 상급자 SSN이 NULL이 아닌 경우만
                     "GROUP BY " + groupByClause;
 
             try (PreparedStatement avgStmt = conn.prepareStatement(avgQuery)) {
