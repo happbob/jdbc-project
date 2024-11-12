@@ -30,7 +30,7 @@ public class EmployeeController {
 
             switch (menu_number){
                 case "1":
-                    employeeReport.printAllEmployees();
+                    employeeReport.executeReport();
                     break;
                 case "2":
                     employeeSalarySearch.findEmployeesBySalaryRange();
